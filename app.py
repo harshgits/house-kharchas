@@ -1,31 +1,24 @@
-from flask import Flask, request, send_file, render_template
-import pandas as pd
-import os
+from flask import Flask, request, render_template
 
 app = Flask(__name__)
 
-@app.route('/')
-def upload_form():
-    return render_template('upload.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    file1 = request.files['file1']
-    file2 = request.files['file2']
-    
-    # Read CSVs using pandas
-    df1 = pd.read_csv(file1)
-    df2 = pd.read_csv(file2)
-    
-    # Concatenate DataFrames
-    result_df = pd.concat([df1, df2], axis=0)
+@app.route("/", methods=["GET", "POST"])
+def input_form():
+    ownership_table_new = None  # Initialize the result as None
+    if request.method == "POST":
+        # Get the input values from the form
+        undocd_kharchas = request.form["undocd_kharchas"]
+        ownership_table = request.form["ownership_table"]
 
-    # Save concatenated result to a file
-    result_file = 'result.csv'
-    result_df.to_csv(result_file, index=False)
+        # Concatenate the input values
+        ownership_table_new = undocd_kharchas + ownership_table
 
-    # Send file back to the user
-    return send_file(result_file, as_attachment=True)
+    # Render the template, pass the concatenated result to the template
+    return render_template(
+        "input_with_result.html", ownership_table_new=ownership_table_new
+    )
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
