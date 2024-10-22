@@ -1,11 +1,10 @@
 import pandas as pd
+import textwrap
 
-
-# Update rst_to_dataframe function to discard leading/trailing whitespace lines
-def convert_rst_to_dataframe(rst_table):
+def convert_texttable_to_dataframe(rst_text_table):
     # Step 1: Discard pure whitespace lines at the start and end
     lines = [
-        line.strip() for line in rst_table.splitlines() if line.strip()
+        line.strip() for line in rst_text_table.splitlines() if line.strip()
     ]  # Trim and discard empty lines
 
     # Step 2: Parse the first line (row separator with '+' and '-')
@@ -78,9 +77,58 @@ def convert_rst_to_dataframe(rst_table):
 
     return df
 
+# Adjusting the function to wrap the column names as well
+def dataframe_to_rst_with_wrapped_headers(df, max_width=25):
+    # Get column headers and determine column widths
+    col_widths = {col: min(max(len(col), max(df[col].apply(lambda x: len(str(x))))) , max_width) for col in df.columns}
+
+    # Function to wrap text in each cell to fit the column width
+    def wrap_text(text, width):
+        return '\n'.join(textwrap.fill(str(text), width=width).split('\n'))
+
+    # Prepare the table lines
+    lines = []
+
+    # Header row with wrapping
+    wrapped_headers = [wrap_text(col, col_widths[col]).split('\n') for col in df.columns]
+    max_header_lines = max([len(header) for header in wrapped_headers])
+    header_lines = [''] * max_header_lines
+
+    for i in range(max_header_lines):
+        for j, header in enumerate(wrapped_headers):
+            if i < len(header):
+                header_lines[i] += f"| {header[i].ljust(col_widths[df.columns[j]])} "
+            else:
+                header_lines[i] += f"| {' '.ljust(col_widths[df.columns[j]])} "
+
+    separator_row = '+-' + '-+-'.join(['-' * col_widths[col] for col in df.columns]) + '-+'
+    equal_row = '+=' + '=+='.join(['=' * col_widths[col] for col in df.columns]) + '=+'
+
+    # Add header and separator
+    lines.append(separator_row)
+    lines.extend(header_lines)
+    lines.append(equal_row)
+
+    # Add data rows
+    for _, row in df.iterrows():
+        row_lines = [''] * max([len(wrap_text(row[col], col_widths[col]).split('\n')) for col in df.columns])
+        for col in df.columns:
+            wrapped_col = wrap_text(row[col], col_widths[col]).split('\n')
+            for i in range(len(row_lines)):
+                if i < len(wrapped_col):
+                    row_lines[i] += f"| {wrapped_col[i].ljust(col_widths[col])} "
+                else:
+                    row_lines[i] += f"| {' '.ljust(col_widths[col])} "
+
+        for r in row_lines:
+            lines.append(r + '|')
+        lines.append(separator_row)
+
+    # Return the final table as a string
+    return '\n'.join(lines)
 
 # Test input with whitespace lines
-rst_input = """
+text_table = """
 
     
     +------------+----------------------+-----------------------------------+------------------------+------------------------------+---------------------------------+
@@ -98,5 +146,13 @@ rst_input = """
 """
 
 # Test the updated function with whitespace trimming at the start
-df_final_with_trimmed_lines = convert_rst_to_dataframe(rst_input)
-print(df_final_with_trimmed_lines)
+df = convert_texttable_to_dataframe(text_table)
+print(df)
+
+
+# Convert the DataFrame to a reStructured text table with wrapped column names and max width of 25 chars
+text_table_new = dataframe_to_rst_with_wrapped_headers(df, max_width=25)
+
+# Output the result
+print(text_table_new)
+
