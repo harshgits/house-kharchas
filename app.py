@@ -18,9 +18,7 @@ def input_form():
         )
 
     # Render the template, pass the concatenated result to the template
-    return render_template(
-        "input_with_result.html", ownership_table_new=ownership_table_new
-    )
+    return render_template("webpage.html", ownership_table_new=ownership_table_new)
 
 
 if __name__ == "__main__":
