@@ -34,7 +34,7 @@ class OwnershipTableTools:
 
         # init list to hold investment dicts that will populate new_odf: inv_dicts
         # - also we maintain a set of inv_dict unique ids of format (inv_date, inv_distro)
-        #   to eliminate dups
+        #   to eliminate dups: inv_dict_ids
         inv_dicts = []
         inv_dict_ids = set()
 
