@@ -13,12 +13,12 @@ class OwnershipTableTools:
         new_odf = pd.DataFrame(
             columns=[
                 "date",
+                "total ownership distribution",
                 "new investment (x1k)",
+                "notes",
                 "new investment distribution (x1k)",
                 "total investment (x1k)",
                 "total investment distribution (x1k)",
-                "total ownership distribution",
-                "notes",
             ]
         ).astype(str)
 
@@ -77,7 +77,7 @@ class OwnershipTableTools:
         else:
             try:
                 tot_inv_distro_dict = convert_inv_distro_jsonlike_to_inv_distro_dict(
-                    old_odf.iloc[-1]["total investment distribution (x1k)"]
+                    old_odf.iloc[-1]["total investment distribution (x1k)"].lower()
                 )
             except Exception as e:
                 raise ValueError(
@@ -97,7 +97,10 @@ class OwnershipTableTools:
         # TODO: implement
 
         # ingest inv_dicts into new_odf
-        inv_dicts = sorted(inv_dicts, key=lambda x: (x['date'], json.dumps(x["inv_distro_dict"])))
+        inv_dicts = sorted(
+            inv_dicts, key=lambda x: (x["date"], json.dumps(x["inv_distro_dict"]))
+        )
+
         def ingest_single_investment_to_ownership_df(
             odf, inv_dict, tot_inv_distro_dict
         ):
@@ -111,24 +114,53 @@ class OwnershipTableTools:
                     f"; perhaps try with rebuild-table-from-scratch"
                 )
 
-            # "date",
-            # "new investment (x1k)",
-            # "new investment distribution (x1k)",
-            # "total investment (x1k)",
-            # "total investment distribution (x1k)",
-            # "total ownership distribution",
-            # "notes",
-            
             # compute row.date
             inv_odf_row_dict["date"] = str(inv_dict["date"])[0:10]
-            
+
             # compute row.new_inv_distro
             inv_distro_dict = pd.Series(inv_dict["inv_distro_dict"]).round(1).to_dict()
-            inv_odf_row_dict["new investment distribution (x1k)"] = json.dumps(inv_distro_dict)
-            
-            # compute row.new_investment
-            inv_odf_row_dict["new investment (x1k)"] = json.dumps(sum(inv_distro_dict.values()))
+            inv_odf_row_dict["new investment distribution (x1k)"] = json.dumps(
+                inv_distro_dict
+            )
 
+            # compute row.new_investment
+            inv_odf_row_dict["new investment (x1k)"] = json.dumps(
+                round(sum(inv_distro_dict.values()), 1)
+            )
+
+            # compute row.total_inv_distro
+            for person, amount in inv_distro_dict.items():
+                tot_inv_distro_dict[person] = (
+                    tot_inv_distro_dict.get(person, 0) + amount
+                )
+            tot_inv_distro_dict = pd.Series(tot_inv_distro_dict).round(1).to_dict()
+            inv_odf_row_dict["total investment distribution (x1k)"] = json.dumps(
+                tot_inv_distro_dict
+            )
+
+            # compute row.total_inv
+            tot_inv = round(sum(tot_inv_distro_dict.values()), 1)
+            inv_odf_row_dict["total investment (x1k)"] = json.dumps(tot_inv)
+
+            # compute row.total_ownp_dist
+            tot_ownp_dist = {
+                k: f"{(v / tot_inv * 100):.2f}".rstrip("0").rstrip(".") + "%"
+                for k, v in tot_inv_distro_dict.items()
+            }
+            inv_odf_row_dict["total ownership distribution"] = json.dumps(tot_ownp_dist)
+
+            # compute row.note
+            inv_odf_row_dict["notes"] = re.sub(r"\s+", " ", inv_dict["note"].strip())
+
+            # append inv_odf_row_dict to odf
+            odf.loc[len(odf)] = inv_odf_row_dict
+
+            return None
+
+        for inv_dict in inv_dicts:
+            ingest_single_investment_to_ownership_df(
+                new_odf, inv_dict, tot_inv_distro_dict
+            )
 
         # convert new_odf back to text table: o_ttable_new
         o_ttable_new = TextTableTools.convert_dataframe_to_texttable(
@@ -136,58 +168,6 @@ class OwnershipTableTools:
         )
 
         return o_ttable_new
-
-    @staticmethod
-    def ingest_single_investment_to_ownership_df(
-        ownership_df, investment_dict, tot_inv_distro_dict
-    ):
-        # extract date
-        date = str(pd.to_datetime(investment_dict["date"]))[0:10]
-        # TODO: raise error if date is older than last (newest) date in ownership_df
-
-        # extract investment distro dict: inv_dist_dict
-        inv_dist_jsonlike = investment_dict["new investment distribution (x1k)"].lower()
-        inv_dist_dict = None
-        try:
-            parsed_dict = json.loads(inv_dist_jsonlike)
-            if all(
-                isinstance(k, str) and isinstance(v, (float, int))
-                for k, v in parsed_dict.items()
-            ):
-                # Convert int values to float if needed
-                inv_dist_dict = {k: float(v) for k, v in parsed_dict.items()}
-        except:
-            inv_dist_jsonlike = re.sub(r"(\w+):", r'"\1":', inv_dist_jsonlike)
-            inv_dist_dict = {k: float(v) for k, v in eval(inv_dist_jsonlike).items()}
-        inv_dist_dict = dict(sorted(inv_dist_dict.items()))
-
-        # raise error if exact same (date, inv_dist_dict) is already there in ownership_df
-        inv_dist_json = json.dumps(inv_dist_dict)
-        if (
-            f"{date} {inv_dist_json}"
-            in (
-                ownership_df["date"]
-                + " "
-                + ownership_df["new investment distribution (x1k)"]
-            ).tolist()
-        ):
-            raise ValueError(
-                f"Investment already exists in ownership_df with (date, inv_dist) = ({date}, {inv_dist_json})"
-            )
-
-        # compute new investment amount: new_inv
-        new_inv = sum(list(inv_dist_dict.values()))
-
-        # update total investment distro: tot_inv_distro_dict
-        for person, amount in inv_dist_dict:
-            tot_inv_distro_dict[person] = (
-                tot_inv_distro_dict.get(person, 0) + inv_dist_dict[person]
-            )
-
-        # extract note
-        note = investment_dict["notes"]
-
-        pass
 
     @staticmethod
     def convert_undocd_kharcha_text_to_investment_dict(undocd_kharcha_text):
@@ -228,7 +208,25 @@ if __name__ == "__main__":
         | 2024-05-25    | 25                      | {Harsh: 25, Aish: 0}                 | 25                        | {Harsh: 100%, Aish: 0%}         | good faith money paid to escrow of   realtor Brian McHone                                                                                                                                                   |
         +---------------+-------------------------+--------------------------------------+---------------------------+---------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         """
-    undocd_kharchas = ""
+    undocd_kharchas = """
+        2024-09-27. 0.3k | Aish
+        (Airbnb Carolyn cash to Harsh)
+
+        2024-09-26. 0.15k | Harsh
+        (Electric bill)
+
+        2024-09-24. 0.1k | Harsh
+        (Utility bill)
+
+        2024-09-23. 0.8k | Aish
+        (Airbnb Shelly cash to Harsh)
+
+        2024-09-24. 0.6k | Harsh
+        (Humaji card: 70, Alicia clean July: 120, Amazon dish soap + clothes soap: 80Coffee pod holder: 20, Rug: 20, Fitted sheet: 30, Side table + hook rack x3 + putty: 90, Knives + pots + chopboard: 135, Keurig pods: 35)
+
+        2024-09-04. 0.25k Amazon home goods | Harsh
+        (rollout bed, comforter, first aid kit, fitted sheet)
+        """
     ownership_table_new = (
         OwnershipTableTools.ingest_undocumented_kharchas_to_ownership_table(
             ownership_table, undocd_kharchas, rebuild_table_from_scratch=True
