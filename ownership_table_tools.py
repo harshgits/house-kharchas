@@ -1,20 +1,112 @@
 from text_table_tools import TextTableTools
+import json
+import pandas as pd
+import re
 
 
 class OwnershipTableTools:
     @staticmethod
     def ingest_undocumented_kharchas_to_ownership_table(
-        ownership_table, undocd_kharchas
+        ownership_table, undocd_kharchas, rebuild_table_from_scratch=False
     ):
-        # load ownership_table into a df: odf
-        odf = TextTableTools.convert_texttable_to_dataframe(ownership_table)
+        # init result df: new_odf
+        new_odf = pd.DataFrame(
+            columns=[
+                "date",
+                "new investment (x1k)",
+                "new investment distribution (x1k)",
+                "total investment (x1k)",
+                "total investment distribution (x1k)",
+                "total ownership distribution",
+                "notes",
+            ]
+        ).astype(str)
 
-        # add undocd kharchas to odf
+        # load ownership_table into a df: old_odf
+        old_odf = (
+            TextTableTools.convert_texttable_to_dataframe(ownership_table)
+            .iloc[::-1]
+            .reset_index(drop=True)
+        )
 
-        # convert odf back to text table: o_ttable_new
-        o_ttable_new = TextTableTools.convert_dataframe_to_texttable(odf)
+        # init dict to hold running total investment distro: tot_inv_distro_dict
+        tot_inv_distro_dict = dict()
+
+        # add undocd kharchas to new_odf
+        if rebuild_table_from_scratch:
+            for _, investment_ser in old_odf.iterrows():
+                OwnershipTableTools.ingest_single_investment_to_ownership_df(
+                    new_odf, investment_ser.to_dict(), tot_inv_distro_dict
+                )
+        else:
+            new_odf = pd.concat(
+                [
+                    new_odf,
+                    old_odf.reindex(columns=new_odf.columns),
+                ],
+                ignore_index=True,
+            )
+
+        # convert new_odf back to text table: o_ttable_new
+        new_odf = new_odf.iloc[::-1].reset_index(drop=True)
+        o_ttable_new = TextTableTools.convert_dataframe_to_texttable(new_odf)
 
         return o_ttable_new
+
+    @staticmethod
+    def ingest_single_investment_to_ownership_df(
+        ownership_df, investment_dict, tot_inv_distro_dict
+    ):
+        # extract date
+        date = str(pd.to_datetime(investment_dict["date"]))[0:10]
+
+        # extract investment distro dict: inv_dist_dict
+        inv_dist_jsonlike = investment_dict["new investment distribution (x1k)"].lower()
+        inv_dist_dict = None
+        try:
+            parsed_dict = json.loads(inv_dist_jsonlike)
+            if all(
+                isinstance(k, str) and isinstance(v, (float, int))
+                for k, v in parsed_dict.items()
+            ):
+                # Convert int values to float if needed
+                inv_dist_dict = {k: float(v) for k, v in parsed_dict.items()}
+        except:
+            inv_dist_jsonlike = re.sub(r"(\w+):", r'"\1":', inv_dist_jsonlike)
+            inv_dist_dict = {k: float(v) for k, v in eval(inv_dist_jsonlike).items()}
+        inv_dist_dict = dict(sorted(inv_dist_dict.items()))
+
+        # extract note
+        note = investment_dict["notes"]
+
+        # raise error if exact same (date, inv_dist_dict) is there in ownership_df
+        inv_dist_json = json.dumps(inv_dist_dict)
+        if (
+            f"{date} {inv_dist_json}"
+            in (
+                ownership_df["date"]
+                + " "
+                + ownership_df["new investment distribution (x1k)"]
+            ).tolist()
+        ):
+            raise ValueError(
+                f"Investment has dups; (date, inv_dist) = ({date}, {inv_dist_json})"
+            )
+
+        # compute new investment: new_inv
+        new_inv = sum(list(inv_dist_dict.values()))
+
+        # update total investment distro: tot_inv_distro_dict
+        for person, amount in inv_dist_dict:
+            tot_inv_distro_dict[person] = (
+                tot_inv_distro_dict.get(person, 0) + inv_dist_dict[person]
+            )
+
+        pass
+
+    @staticmethod
+    def convert_undocd_kharcha_text_to_investment_dict(undocd_kharcha_text):
+        return dict()
 
 
 if __name__ == "__main__":
@@ -54,9 +146,9 @@ if __name__ == "__main__":
     undocd_kharchas = ""
     ownership_table_new = (
         OwnershipTableTools.ingest_undocumented_kharchas_to_ownership_table(
-            ownership_table, undocd_kharchas
+            ownership_table, undocd_kharchas, rebuild_table_from_scratch=True
         )
     )
-    print(ownership_table)
+    print(ownership_table_new)
 
     print("whoa")
