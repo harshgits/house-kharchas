@@ -25,7 +25,7 @@ class OwnershipTableTools:
         # load ownership_table into a df: old_odf
         old_odf = (
             TextTableTools.convert_texttable_to_dataframe(ownership_table)
-            .iloc[::-1]
+            .sort_values("date")
             .reset_index(drop=True)
         )
 
@@ -35,6 +35,7 @@ class OwnershipTableTools:
         # add undocd kharchas to new_odf
         if rebuild_table_from_scratch:
             for _, investment_ser in old_odf.iterrows():
+                # TODO: change this step to just get a list of inv_dicts; we need to combine these with undocd_kharchas and sort by date before ingesting
                 OwnershipTableTools.ingest_single_investment_to_ownership_df(
                     new_odf, investment_ser.to_dict(), tot_inv_distro_dict
                 )
@@ -46,6 +47,8 @@ class OwnershipTableTools:
                 ],
                 ignore_index=True,
             )
+
+            # TODO: update tot_inv_distro_dict from last row of old_odf; if fail, raise error with reco to try again with rebuild
 
         # convert new_odf back to text table: o_ttable_new
         new_odf = new_odf.iloc[::-1].reset_index(drop=True)
@@ -59,6 +62,7 @@ class OwnershipTableTools:
     ):
         # extract date
         date = str(pd.to_datetime(investment_dict["date"]))[0:10]
+        # TODO: raise error if date is older than last (newest) date in ownership_df
 
         # extract investment distro dict: inv_dist_dict
         inv_dist_jsonlike = investment_dict["new investment distribution (x1k)"].lower()
@@ -79,7 +83,7 @@ class OwnershipTableTools:
         # extract note
         note = investment_dict["notes"]
 
-        # raise error if exact same (date, inv_dist_dict) is there in ownership_df
+        # raise error if exact same (date, inv_dist_dict) is already there in ownership_df
         inv_dist_json = json.dumps(inv_dist_dict)
         if (
             f"{date} {inv_dist_json}"
@@ -90,7 +94,7 @@ class OwnershipTableTools:
             ).tolist()
         ):
             raise ValueError(
-                f"Investment has dups; (date, inv_dist) = ({date}, {inv_dist_json})"
+                f"Investment already exists in ownership_df with (date, inv_dist) = ({date}, {inv_dist_json})"
             )
 
         # compute new investment: new_inv
