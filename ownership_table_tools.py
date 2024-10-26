@@ -7,7 +7,7 @@ import re
 class OwnershipTableTools:
     @staticmethod
     def ingest_undocumented_kharchas_to_ownership_table(
-        ownership_table, undocd_kharchas, rebuild_table_from_scratch=False
+        ownership_table, undocd_kharchas_text, rebuild_table_from_scratch=False
     ):
         # init result df: new_odf
         new_odf = pd.DataFrame(
@@ -25,21 +25,66 @@ class OwnershipTableTools:
         # load ownership_table into a df: old_odf
         old_odf = (
             TextTableTools.convert_texttable_to_dataframe(ownership_table)
-            .sort_values("date")
+            .iloc[::-1]
             .reset_index(drop=True)
         )
 
         # init dict to hold running total investment distro: tot_inv_distro_dict
         tot_inv_distro_dict = dict()
 
-        # add undocd kharchas to new_odf
+        # init list to hold investment dicts that will populate new_odf: inv_dicts
+        # - also we maintain a set of inv_dict unique ids of format (inv_date, inv_distro)
+        #   to eliminate dups
+        inv_dicts = []
+        inv_dict_ids = set()
+
+        # extract things from old_odf: tot_inv_distro_dict (if needed), inv_dicts (if needed)
+        def convert_inv_distro_jsonlike_to_inv_distro_dict(inv_dist_jsonlike):
+            inv_dist_dict = None
+            try:
+                parsed_dict = json.loads(inv_dist_jsonlike)
+                if all(
+                    isinstance(k, str) and isinstance(v, (float, int))
+                    for k, v in parsed_dict.items()
+                ):
+                    # Convert int values to float if needed
+                    inv_dist_dict = {k: float(v) for k, v in parsed_dict.items()}
+            except:
+                inv_dist_jsonlike = re.sub(r"(\w+):", r'"\1":', inv_dist_jsonlike)
+                inv_dist_dict = {
+                    k: float(v) for k, v in eval(inv_dist_jsonlike).items()
+                }
+            inv_dist_dict = dict(sorted(inv_dist_dict.items()))
+            return inv_dist_dict
+
         if rebuild_table_from_scratch:
-            for _, investment_ser in old_odf.iterrows():
-                # TODO: change this step to just get a list of inv_dicts; we need to combine these with undocd_kharchas and sort by date before ingesting
-                OwnershipTableTools.ingest_single_investment_to_ownership_df(
-                    new_odf, investment_ser.to_dict(), tot_inv_distro_dict
+            for _, inv_ser in old_odf.iterrows():
+                inv_dict = dict()
+                inv_dict["date"] = pd.to_datetime(inv_ser["date"])
+                inv_dict["inv_distro_dict"] = (
+                    convert_inv_distro_jsonlike_to_inv_distro_dict(
+                        inv_ser["new investment distribution (x1k)"].lower()
+                    )
                 )
+                inv_dict["note"] = inv_ser["notes"]
+                inv_dict_id = (
+                    inv_dict["date"],
+                    json.dumps(inv_dict["inv_distro_dict"]),
+                )
+                if inv_dict_id not in inv_dict_ids:
+                    inv_dict_ids.add(inv_dict_id)
+                    inv_dicts.append(inv_dict)
         else:
+            try:
+                tot_inv_distro_dict = convert_inv_distro_jsonlike_to_inv_distro_dict(
+                    old_odf.iloc[-1]["total investment distribution (x1k)"]
+                )
+            except Exception as e:
+                raise ValueError(
+                    f"Parsing tot_inv_distro_dict from old_odf failed with error (details ahead)"
+                    f"; perhaps try with rebuild-table-from-scratch; error details:"
+                    f"\n\n{e}"
+                )
             new_odf = pd.concat(
                 [
                     new_odf,
@@ -48,11 +93,47 @@ class OwnershipTableTools:
                 ignore_index=True,
             )
 
-            # TODO: update tot_inv_distro_dict from last row of old_odf; if fail, raise error with reco to try again with rebuild
+        # extract inv-dicts from undocd_kharchas_text into inv_dicts
+        # TODO: implement
+
+        # ingest inv_dicts into new_odf
+        inv_dicts = sorted(inv_dicts, key=lambda x: (x['date'], json.dumps(x["inv_distro_dict"])))
+        def ingest_single_investment_to_ownership_df(
+            odf, inv_dict, tot_inv_distro_dict
+        ):
+            # init row dict to be ingested: inv_odf_row_dict
+            inv_odf_row_dict = dict()
+
+            # raise error if date being ingested is older than odf last date
+            if len(odf) > 0 and inv_dict["date"] < pd.to_datetime(odf.iloc[-1]["date"]):
+                raise ValueError(
+                    f"investment-date is older than last ownership_df date"
+                    f"; perhaps try with rebuild-table-from-scratch"
+                )
+
+            # "date",
+            # "new investment (x1k)",
+            # "new investment distribution (x1k)",
+            # "total investment (x1k)",
+            # "total investment distribution (x1k)",
+            # "total ownership distribution",
+            # "notes",
+            
+            # compute row.date
+            inv_odf_row_dict["date"] = str(inv_dict["date"])[0:10]
+            
+            # compute row.new_inv_distro
+            inv_distro_dict = pd.Series(inv_dict["inv_distro_dict"]).round(1).to_dict()
+            inv_odf_row_dict["new investment distribution (x1k)"] = json.dumps(inv_distro_dict)
+            
+            # compute row.new_investment
+            inv_odf_row_dict["new investment (x1k)"] = json.dumps(sum(inv_distro_dict.values()))
+
 
         # convert new_odf back to text table: o_ttable_new
-        new_odf = new_odf.iloc[::-1].reset_index(drop=True)
-        o_ttable_new = TextTableTools.convert_dataframe_to_texttable(new_odf)
+        o_ttable_new = TextTableTools.convert_dataframe_to_texttable(
+            new_odf.iloc[::-1].reset_index(drop=True)
+        )
 
         return o_ttable_new
 
