@@ -80,9 +80,6 @@ class OwnershipTableTools:
             inv_dist_dict = {k: float(v) for k, v in eval(inv_dist_jsonlike).items()}
         inv_dist_dict = dict(sorted(inv_dist_dict.items()))
 
-        # extract note
-        note = investment_dict["notes"]
-
         # raise error if exact same (date, inv_dist_dict) is already there in ownership_df
         inv_dist_json = json.dumps(inv_dist_dict)
         if (
@@ -97,7 +94,7 @@ class OwnershipTableTools:
                 f"Investment already exists in ownership_df with (date, inv_dist) = ({date}, {inv_dist_json})"
             )
 
-        # compute new investment: new_inv
+        # compute new investment amount: new_inv
         new_inv = sum(list(inv_dist_dict.values()))
 
         # update total investment distro: tot_inv_distro_dict
@@ -105,6 +102,9 @@ class OwnershipTableTools:
             tot_inv_distro_dict[person] = (
                 tot_inv_distro_dict.get(person, 0) + inv_dist_dict[person]
             )
+
+        # extract note
+        note = investment_dict["notes"]
 
         pass
 
