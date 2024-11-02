@@ -221,10 +221,6 @@ class OwnershipTableTools:
 
         return o_ttable_new
 
-    @staticmethod
-    def convert_undocd_kharcha_text_to_investment_dict(undocd_kharcha_text):
-        return dict()
-
 
 if __name__ == "__main__":
     ownership_table = """
@@ -285,5 +281,3 @@ if __name__ == "__main__":
         )
     )
     print(ownership_table_new)
-
-    print("whoa")
