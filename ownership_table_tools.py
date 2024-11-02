@@ -40,7 +40,10 @@ class OwnershipTableTools:
 
         # extract things from old_odf: tot_inv_distro_dict (if needed), inv_dicts (if needed)
         def convert_inv_distro_jsonlike_to_inv_distro_dict(inv_dist_jsonlike):
+            # init result
             inv_dist_dict = None
+
+            # parse inv_dist_jsonlike into inv_dist_dict
             try:
                 parsed_dict = json.loads(inv_dist_jsonlike)
                 if all(
@@ -54,8 +57,28 @@ class OwnershipTableTools:
                 inv_dist_dict = {
                     k: float(v) for k, v in eval(inv_dist_jsonlike).items()
                 }
+
+            # remove inv_dist_dict items where amount is 0
+            inv_dist_dict = {k: float(v) for k, v in parsed_dict.items() if v > 0}
+
+            # sort inv_dist_dict
             inv_dist_dict = dict(sorted(inv_dist_dict.items()))
+
             return inv_dist_dict
+
+        def add_invdict_to_invdicts(inv_dict, inv_dicts, inv_dict_ids):
+            inv_dict_id = (
+                inv_dict["date"],
+                json.dumps(inv_dict["inv_distro_dict"]),
+            )
+            if inv_dict_id not in inv_dict_ids:
+                inv_dict_ids.add(inv_dict_id)
+                inv_dicts.append(inv_dict)
+            else:
+                raise ValueError(
+                    f"Tried adding existing investment to inv_dicts; investment-id:"
+                    f"\n{inv_dict_id}"
+                )
 
         if rebuild_table_from_scratch:
             for _, inv_ser in old_odf.iterrows():
@@ -67,13 +90,7 @@ class OwnershipTableTools:
                     )
                 )
                 inv_dict["note"] = inv_ser["notes"]
-                inv_dict_id = (
-                    inv_dict["date"],
-                    json.dumps(inv_dict["inv_distro_dict"]),
-                )
-                if inv_dict_id not in inv_dict_ids:
-                    inv_dict_ids.add(inv_dict_id)
-                    inv_dicts.append(inv_dict)
+                add_invdict_to_invdicts(inv_dict, inv_dicts, inv_dict_ids)
         else:
             try:
                 tot_inv_distro_dict = convert_inv_distro_jsonlike_to_inv_distro_dict(
@@ -94,13 +111,49 @@ class OwnershipTableTools:
             )
 
         # extract inv-dicts from undocd_kharchas_text into inv_dicts
-        # TODO: implement
+        raw_kharchas = [
+            block.strip()
+            for block in re.split(r"\n\s*\n", undocd_kharchas_text.strip())
+            if block.strip()
+        ]
 
-        # ingest inv_dicts into new_odf
+        def convert_kharcha_to_inv_dict(kharcha_text):
+            # Split the input into lines and strip any leading/trailing spaces
+            lines = kharcha_text.strip().split("\n")
+
+            # Parse the first line for the date, amount, and recipient
+            header_match = re.match(
+                r"(\d{4}-\d{2}-\d{2})\. (\d+\.\d+)k \| (\w+)", lines[0].strip()
+            )
+
+            if not header_match:
+                raise ValueError("Invalid format for the header line.")
+
+            # Extract parsed components
+            date_str = header_match.group(1)
+            amount = float(header_match.group(2))
+            recipient = header_match.group(3).lower()  # Make the key lowercase
+
+            # Create the dictionary structure
+            inv_dict = {
+                "date": pd.Timestamp(date_str),
+                "inv_distro_dict": {recipient: amount},
+                "note": lines[1].strip("()").strip() if len(lines) > 1 else "",
+            }
+
+            return inv_dict
+
+        for kharcha in raw_kharchas:
+            add_invdict_to_invdicts(
+                convert_kharcha_to_inv_dict(kharcha), inv_dicts, inv_dict_ids
+            )
+
+        # sort inv_dicts by date
         inv_dicts = sorted(
             inv_dicts, key=lambda x: (x["date"], json.dumps(x["inv_distro_dict"]))
         )
 
+        # ingest inv_dicts into new_odf
         def ingest_single_investment_to_ownership_df(
             odf, inv_dict, tot_inv_distro_dict
         ):
