@@ -59,7 +59,7 @@ class OwnershipTableTools:
                 }
 
             # remove inv_dist_dict items where amount is 0
-            inv_dist_dict = {k: float(v) for k, v in parsed_dict.items() if v > 0}
+            inv_dist_dict = {k: float(v) for k, v in inv_dist_dict.items() if v > 0}
 
             # sort inv_dist_dict
             inv_dist_dict = dict(sorted(inv_dist_dict.items()))
@@ -123,7 +123,7 @@ class OwnershipTableTools:
 
             # Parse the first line for the date, amount, and recipient
             header_match = re.match(
-                r"(\d{4}-\d{2}-\d{2})\. (\d+\.\d+)k \| (\w+)", lines[0].strip()
+                r"(\d{4}-\d{2}-\d{2})\.\s+(\d+\.\d+)k\s+\|\s+(\w+)", lines[0].strip()
             )
 
             if not header_match:
@@ -138,7 +138,7 @@ class OwnershipTableTools:
             inv_dict = {
                 "date": pd.Timestamp(date_str),
                 "inv_distro_dict": {recipient: amount},
-                "note": lines[1].strip("()").strip() if len(lines) > 1 else "",
+                "note": lines[1].strip().strip("()") if len(lines) > 1 else "",
             }
 
             return inv_dict
@@ -187,6 +187,7 @@ class OwnershipTableTools:
                     tot_inv_distro_dict.get(person, 0) + amount
                 )
             tot_inv_distro_dict = pd.Series(tot_inv_distro_dict).round(1).to_dict()
+            tot_inv_distro_dict = dict(sorted(tot_inv_distro_dict.items()))
             inv_odf_row_dict["total investment distribution (x1k)"] = json.dumps(
                 tot_inv_distro_dict
             )
@@ -207,8 +208,6 @@ class OwnershipTableTools:
 
             # append inv_odf_row_dict to odf
             odf.loc[len(odf)] = inv_odf_row_dict
-
-            return None
 
         for inv_dict in inv_dicts:
             ingest_single_investment_to_ownership_df(
@@ -277,8 +276,8 @@ if __name__ == "__main__":
         2024-09-24. 0.6k | Harsh
         (Humaji card: 70, Alicia clean July: 120, Amazon dish soap + clothes soap: 80Coffee pod holder: 20, Rug: 20, Fitted sheet: 30, Side table + hook rack x3 + putty: 90, Knives + pots + chopboard: 135, Keurig pods: 35)
 
-        2024-09-04. 0.25k Amazon home goods | Harsh
-        (rollout bed, comforter, first aid kit, fitted sheet)
+        2024-09-04. 0.25k |   Harsh   
+        (Amazon home goods: rollout bed, comforter, first aid kit, fitted sheet)
         """
     ownership_table_new = (
         OwnershipTableTools.ingest_undocumented_kharchas_to_ownership_table(
