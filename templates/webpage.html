@@ -8,17 +8,20 @@
 </head>
 
 <body>
-    <h1>Enter Text to Concatenate</h1>
+    <h1>Ownership table updater</h1>
     <form action="/" method="post">
-        <label for="undocd_kharchas">undocd_kharchas:</label><br>
-        <textarea id="undocd_kharchas" name="undocd_kharchas" rows="4"
-            cols="50">{{ request.form['undocd_kharchas'] if request.form.get('undocd_kharchas') else '' }}</textarea><br><br>
-
-        <label for="ownership_table">ownership_table:</label><br>
+        <label for="ownership_table">ownership table:</label><br>
         <textarea id="ownership_table" name="ownership_table" rows="4"
             cols="50">{{ request.form['ownership_table'] if request.form.get('ownership_table') else '' }}</textarea><br><br>
 
-        <input type="submit" value="Concatenate">
+        <label for="undocd_kharchas">undocumented kharchas:</label><br>
+        <textarea id="undocd_kharchas" name="undocd_kharchas" rows="4"
+            cols="50">{{ request.form['undocd_kharchas'] if request.form.get('undocd_kharchas') else '' }}</textarea><br><br>
+
+        <label for="rebuild_table">Rebuild table from scratch:</label>
+        <input type="checkbox" id="rebuild_table" name="rebuild_table" value="true" checked><br><br>
+
+        <input type="submit" value="Ingest">
     </form>
 
     <!-- Display the concatenated result if available -->

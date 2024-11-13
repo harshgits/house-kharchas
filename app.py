@@ -11,10 +11,11 @@ def input_form():
         # Get the input values from the form
         undocd_kharchas = request.form["undocd_kharchas"]
         ownership_table = request.form["ownership_table"]
+        rebuild_table = "rebuild_table" in request.form
 
-        # Concatenate the input values
+        # compute result
         ownership_table_new = OTT.ingest_undocumented_kharchas_to_ownership_table(
-            ownership_table, undocd_kharchas
+            ownership_table, undocd_kharchas, rebuild_table
         )
 
     # Render the template, pass the concatenated result to the template
