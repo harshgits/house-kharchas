@@ -5,6 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Input Concatenation</title>
+    <style>
+        #ownership_table_new {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 100%;
+            max-width: 600px;
+            min-height: 100px;
+            white-space: pre-wrap; /* Preserves line breaks */
+            overflow-wrap: break-word; /* Wraps long words */
+            background-color: #f9f9f9;
+        }
+    </style>
 </head>
 
 <body>
@@ -28,7 +40,25 @@
     {% if ownership_table_new %}
     <h2>Concatenated Result</h2>
     <label for="ownership_table_new">ownership_table_new:</label><br>
-    <textarea id="ownership_table_new" rows="4" cols="50" readonly>{{ ownership_table_new }}</textarea><br><br>
+    <div id="ownership_table_new">{{ ownership_table_new }}</div><br>
+
+    <!-- Copy to Clipboard Button -->
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+
+    <script>
+        function copyToClipboard() {
+            // Get the text from the div
+            const textToCopy = document.getElementById('ownership_table_new').innerText;
+            // Create a temporary input to store the text for copying
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            alert('Copied to clipboard!');
+        }
+    </script>
     {% endif %}
 </body>
 
