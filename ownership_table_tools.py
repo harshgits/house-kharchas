@@ -14,11 +14,11 @@ class OwnershipTableTools:
             columns=[
                 "date",
                 "total ownership distribution",
-                "new investment (x1k)",
-                "notes",
                 "new investment distribution (x1k)",
-                "total investment (x1k)",
+                "notes",
                 "total investment distribution (x1k)",
+                "new investment (x1k)",
+                "total investment (x1k)",
             ]
         ).astype(str)
 
@@ -121,23 +121,30 @@ class OwnershipTableTools:
             # Split the input into lines and strip any leading/trailing spaces
             lines = kharcha_text.strip().split("\n")
 
-            # Parse the first line for the date, amount, and recipient
-            header_match = re.match(
-                r"(\d{4}-\d{2}-\d{2})\.\s+(\d+\.\d+)k\s+\|\s+(\w+)", lines[0].strip()
-            )
-
-            if not header_match:
+            # Parse the first line for date and spenders with amounts
+            header_line = lines[0].strip()
+            date_match = re.match(r"(\d{4}-\d{2}-\d{2})\.", header_line)
+            
+            if not date_match:
                 raise ValueError("Invalid format for the header line.")
 
-            # Extract parsed components
-            date_str = header_match.group(1)
-            amount = float(header_match.group(2))
-            recipient = header_match.group(3).lower()  # Make the key lowercase
+            # Extract date and initialize distribution dictionary
+            date_str = date_match.group(1)
+            inv_distro_dict = {}
+            
+            # Pattern to find each 'amount | spender' pair in the header
+            spender_pattern = re.findall(r"(\d+\.\d+|(\d+))k\s+\|\s+(\w+)", header_line)
+
+            # Parse each spender entry
+            for match in spender_pattern:
+                amount = float(match[0])  # match[0] contains the amount
+                spender = match[2].lower()  # match[2] contains the spender's name
+                inv_distro_dict[spender] = amount
 
             # Create the dictionary structure
             inv_dict = {
                 "date": pd.Timestamp(date_str),
-                "inv_distro_dict": {recipient: amount},
+                "inv_distro_dict": inv_distro_dict,
                 "note": lines[1].strip().strip("()") if len(lines) > 1 else "",
             }
 
@@ -257,8 +264,6 @@ class OwnershipTableTools:
             +---------------+-------------------------+--------------------------------------+---------------------------+---------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
             """
         undocd_kharchas = """
-            2024-09-27. 0.3k | Aish
-            (Airbnb Carolyn cash to Harsh)
 
             2024-09-26. 0.15k | Harsh
             (Electric bill)
