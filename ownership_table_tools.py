@@ -124,14 +124,14 @@ class OwnershipTableTools:
             # Parse the first line for date and spenders with amounts
             header_line = lines[0].strip()
             date_match = re.match(r"(\d{4}-\d{2}-\d{2})\.", header_line)
-            
+
             if not date_match:
                 raise ValueError("Invalid format for the header line.")
 
             # Extract date and initialize distribution dictionary
             date_str = date_match.group(1)
             inv_distro_dict = {}
-            
+
             # Pattern to find each 'amount | spender' pair in the header
             spender_pattern = re.findall(r"(\d+\.\d+|(\d+))k\s+\|\s+(\w+)", header_line)
 
@@ -178,14 +178,14 @@ class OwnershipTableTools:
             inv_odf_row_dict["date"] = str(inv_dict["date"])[0:10]
 
             # compute row.new_inv_distro
-            inv_distro_dict = pd.Series(inv_dict["inv_distro_dict"]).round(1).to_dict()
+            inv_distro_dict = pd.Series(inv_dict["inv_distro_dict"]).round(2).to_dict()
             inv_odf_row_dict["new investment distribution (x1k)"] = json.dumps(
                 inv_distro_dict
             )
 
             # compute row.new_investment
             inv_odf_row_dict["new investment (x1k)"] = json.dumps(
-                round(sum(inv_distro_dict.values()), 1)
+                round(sum(inv_distro_dict.values()), 2)
             )
 
             # compute row.total_inv_distro
@@ -227,7 +227,7 @@ class OwnershipTableTools:
         )
 
         return o_ttable_new
-    
+
     @staticmethod
     def EXAMPLE_ingest_undocumented_kharchas():
         ownership_table = """
@@ -286,6 +286,7 @@ class OwnershipTableTools:
             )
         )
         print(ownership_table_new)
+
 
 if __name__ == "__main__":
     OwnershipTableTools.EXAMPLE_ingest_undocumented_kharchas()
