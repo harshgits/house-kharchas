@@ -4,23 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Input Concatenation</title>
+    <title>ownership table updater</title>
     <style>
         #ownership_table_new {
+            font-family: monospace;
+            /* Monospaced font */
+            font-size: 6pt;
+            /* Small font size */
             border: 1px solid #ccc;
             padding: 10px;
             width: 100%;
-            max-width: 600px;
+            /* Full width */
             min-height: 100px;
-            white-space: pre-wrap; /* Preserves line breaks */
-            overflow-wrap: break-word; /* Wraps long words */
+            white-space: pre-wrap;
+            /* Preserves line breaks */
+            overflow-wrap: break-word;
+            /* Wraps long words */
             background-color: #f9f9f9;
         }
     </style>
 </head>
 
 <body>
-    <h1>Ownership table updater</h1>
+    <h1>ownership table updater</h1>
     <form action="/" method="post">
         <label for="ownership_table">ownership table:</label><br>
         <textarea id="ownership_table" name="ownership_table" rows="4"
@@ -30,20 +36,21 @@
         <textarea id="undocd_kharchas" name="undocd_kharchas" rows="4"
             cols="50">{{ request.form['undocd_kharchas'] if request.form.get('undocd_kharchas') else '' }}</textarea><br><br>
 
-        <label for="rebuild_table">Rebuild table from scratch:</label>
+        <label for="rebuild_table">rebuild table from scratch:</label>
         <input type="checkbox" id="rebuild_table" name="rebuild_table" value="true" checked><br><br>
 
-        <input type="submit" value="Ingest">
+        <input type="submit" value="update table">
     </form>
 
-    <!-- Display the concatenated result if available -->
+    <!-- Display the new ownership table if available -->
     {% if ownership_table_new %}
-    <h2>Concatenated Result</h2>
-    <label for="ownership_table_new">ownership_table_new:</label><br>
-    <div id="ownership_table_new">{{ ownership_table_new }}</div><br>
+    <h2>new ownership table</h2>
 
-    <!-- Copy to Clipboard Button -->
-    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+    <!-- Copy to Clipboard Button above the output -->
+    <button onclick="copyToClipboard()">Copy to Clipboard</button><br><br>
+
+    <!-- <label for="ownership_table_new">ownership_table_new:</label><br> -->
+    <div id="ownership_table_new">{{ ownership_table_new }}</div><br>
 
     <script>
         function copyToClipboard() {
@@ -56,7 +63,6 @@
             tempInput.select();
             document.execCommand('copy');
             document.body.removeChild(tempInput);
-            alert('Copied to clipboard!');
         }
     </script>
     {% endif %}
