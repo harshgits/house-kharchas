@@ -61,9 +61,6 @@ class OwnershipTableTools:
             # remove inv_dist_dict items where amount is 0
             inv_dist_dict = {k: float(v) for k, v in inv_dist_dict.items() if v > 0}
 
-            # # sort inv_dist_dict
-            # inv_dist_dict = dict(sorted(inv_dist_dict.items()))
-
             return inv_dist_dict
 
         def add_invdict_to_invdicts(inv_dict, inv_dicts, inv_dict_ids):

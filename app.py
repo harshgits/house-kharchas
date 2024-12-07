@@ -14,9 +14,12 @@ def input_form():
         rebuild_table = "rebuild_table" in request.form
 
         # compute result
-        ownership_table_new = OTT.ingest_undocumented_kharchas_to_ownership_table(
-            ownership_table, undocd_kharchas, rebuild_table
-        )
+        try:
+            ownership_table_new = OTT.ingest_undocumented_kharchas_to_ownership_table(
+                ownership_table, undocd_kharchas, rebuild_table
+            )
+        except Exception as e:
+            ownership_table_new = f"Error occured during ingestion: \n{e}"
 
     # Render the template, pass the concatenated result to the template
     return render_template("webpage.html", ownership_table_new=ownership_table_new)
