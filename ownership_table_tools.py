@@ -223,7 +223,7 @@ class OwnershipTableTools:
 
         # convert new_odf back to text table: o_ttable_new
         o_ttable_new = TextTableTools.convert_dataframe_to_texttable(
-            new_odf.iloc[::-1].reset_index(drop=True)
+            new_odf.iloc[::-1].reset_index(drop=True), 25
         )
 
         return o_ttable_new

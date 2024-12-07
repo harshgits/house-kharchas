@@ -164,11 +164,11 @@ class TextTableTools:
             raw_widths = [len(str(x)) for x in df[col]]
             raw_widths.append(len(col))
 
-            # Compute p70 (70th percentile)
-            p70width = int(np.percentile(raw_widths, 70))
+            # Compute typical cell width at the higher end
+            pHi_width = int(np.percentile(raw_widths, 80))
 
             # Compare with max_width and set initial col_width
-            col_width = min(p70width, max_width)
+            col_width = min(pHi_width, max_width)
 
             # Wrap text and find maximum wrapped width
 
