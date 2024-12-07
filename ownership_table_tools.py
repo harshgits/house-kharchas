@@ -61,12 +61,14 @@ class OwnershipTableTools:
             # remove inv_dist_dict items where amount is 0
             inv_dist_dict = {k: float(v) for k, v in inv_dist_dict.items() if v > 0}
 
-            # sort inv_dist_dict
-            inv_dist_dict = dict(sorted(inv_dist_dict.items()))
+            # # sort inv_dist_dict
+            # inv_dist_dict = dict(sorted(inv_dist_dict.items()))
 
             return inv_dist_dict
 
         def add_invdict_to_invdicts(inv_dict, inv_dicts, inv_dict_ids):
+            inv_dict = inv_dict.copy()
+            inv_dict["inv_distro_dict"] = dict(sorted(inv_dict["inv_distro_dict"].items()))
             inv_dict_id = (
                 inv_dict["date"],
                 json.dumps(inv_dict["inv_distro_dict"]),
@@ -110,7 +112,7 @@ class OwnershipTableTools:
                 ignore_index=True,
             )
 
-        # extract inv-dicts from undocd_kharchas_text into inv_dicts
+        # extract investment-dicts from undocd_kharchas_text into inv_dicts
         raw_kharchas = [
             block.strip()
             for block in re.split(r"\n\s*\n", undocd_kharchas_text.strip())
