@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import textwrap
 
@@ -115,7 +116,7 @@ class TextTableTools:
         return df
 
     @staticmethod
-    def convert_dataframe_to_texttable(df, max_width=25, max_col_width_header=10):
+    def convert_dataframe_to_texttable(df, max_width=30):
         """Convert Dataframe to text-table.
 
         EXAMPLE:
@@ -156,19 +157,34 @@ class TextTableTools:
         """
 
         # Get column headers and determine column widths
-        col_widths = {}
-        for col in df.columns:
-            max_data_width = min(max(df[col].apply(lambda x: len(str(x)))), max_width)
-            header_width = len(col)
-            if (
-                header_width > max_col_width_header
-                and max_data_width <= max_col_width_header
-            ):
-                col_widths[col] = (
-                    max_col_width_header  # Constrain column width to max_col_width_header
-                )
-            else:
-                col_widths[col] = min(max(header_width, max_data_width), max_width)
+
+        def get_ideal_col_width(df, col, max_width=max_width):
+
+            # Get raw widths of all cells including header
+            raw_widths = [len(str(x)) for x in df[col]]
+            raw_widths.append(len(col))
+
+            # Compute p70 (70th percentile)
+            p70width = int(np.percentile(raw_widths, 70))
+
+            # Compare with max_width and set initial col_width
+            col_width = min(p70width, max_width)
+
+            # Wrap text and find maximum wrapped width
+
+            def get_wrapped_width(text, width):
+                wrapped = textwrap.fill(str(text), width=width).split("\n")
+                return max(len(line) for line in wrapped) if wrapped else 0
+
+            wrapped_widths = [get_wrapped_width(x, col_width) for x in df[col]]
+            wrapped_widths.append(get_wrapped_width(col, col_width))
+            max_wrapped_width = max(wrapped_widths)
+
+            # If max wrapped width is less than col_width, use it instead
+            return min(col_width, max_wrapped_width)
+
+        # Get column headers and determine column widths
+        col_widths = {col: get_ideal_col_width(df, col) for col in df.columns}
 
         # Function to wrap text in each cell to fit the column width
         def wrap_text(text, width):
