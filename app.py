@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def input_form():
-    ownership_table_new = None  # Initialize the result as None
+    ownership_table_new_text = None  # Initialize the result as None
     if request.method == "POST":
         # Get the input values from the form
         undocd_kharchas = request.form["undocd_kharchas"]
@@ -15,14 +15,15 @@ def input_form():
 
         # compute result
         try:
-            ownership_table_new = OTT.ingest_undocumented_kharchas_to_ownership_table(
+            ownership_table_new_text, extras = OTT.ingest_undocumented_kharchas_to_ownership_table(
                 ownership_table, undocd_kharchas, rebuild_table
             )
+            ownership_table_new_html = extras["o_htmltable_new"]
         except Exception as e:
-            ownership_table_new = f"Error occured during ingestion: \n{e}"
+            ownership_table_new_text = f"Error occured during ingestion: \n{e}"
 
     # Render the template, pass the concatenated result to the template
-    return render_template("webpage.html", ownership_table_new=ownership_table_new)
+    return render_template("webpage.html", ownership_table_new=ownership_table_new_text)
 
 
 if __name__ == "__main__":

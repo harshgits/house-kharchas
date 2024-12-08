@@ -9,6 +9,9 @@ class OwnershipTableTools:
     def ingest_undocumented_kharchas_to_ownership_table(
         ownership_table, undocd_kharchas_text, rebuild_table_from_scratch=False
     ):
+        # init result
+        (o_ttable_new, extras) = "", {"o_htmltable_new": ""}
+
         # init result df: new_odf
         new_odf = pd.DataFrame(
             columns=[
@@ -221,11 +224,17 @@ class OwnershipTableTools:
             )
 
         # convert new_odf back to text table: o_ttable_new
+        new_odf = new_odf.iloc[::-1].reset_index(drop=True)
         o_ttable_new = TextTableTools.convert_dataframe_to_texttable(
-            new_odf.iloc[::-1].reset_index(drop=True), 25
+            new_odf, 25
         )
 
-        return o_ttable_new
+        # convert new_odf to html-table
+        extras["o_htmltable_new"] = TextTableTools.convert_dataframe_to_html_table(
+            new_odf
+        )
+
+        return (o_ttable_new, extras)
 
     @staticmethod
     def EXAMPLE_ingest_undocumented_kharchas():
