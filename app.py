@@ -12,7 +12,7 @@ def input_form():
     ownership_table_new_html = None
 
     if request.method == "POST":
-        
+
         # Get the input values from the form
         undocd_kharchas = request.form["undocd_kharchas"]
         ownership_table = request.form["ownership_table"]

@@ -6,14 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ownership table updater</title>
     <style>
-        #ownership_table_new_text,
-        #ownership_table_new_html {
+        .shared-style {
             font-family: monospace;
             /* Monospaced font */
             font-size: 7pt;
             /* Small font size */
             border: 1px solid #ccc;
-            padding: 10px;
             width: 100%;
             /* Full width */
             max-height: 50ch;
@@ -25,6 +23,8 @@
             white-space: pre;
             /* Preserve white space and prevent wrapping */
             background-color: #f9f9f9;
+            box-sizing: border-box;
+            resize: vertical;
         }
     </style>
 </head>
@@ -33,12 +33,12 @@
     <h1>ownership table updater</h1>
     <form action="/" method="post">
         <label for="ownership_table">ownership table:</label><br>
-        <textarea id="ownership_table" name="ownership_table" rows="20" cols="50"
-            style="width: 100%; box-sizing: border-box; resize: vertical; font-size: 7pt;">{{ request.form['ownership_table'] if request.form.get('ownership_table') else '' }}</textarea><br><br>
+        <textarea id="ownership_table" name="ownership_table" class="shared-style" rows="20" cols="50"
+            wrap="off">{{ request.form['ownership_table'] if request.form.get('ownership_table') else '' }}</textarea><br><br>
 
         <label for="undocd_kharchas">undocumented kharchas:</label><br>
-        <textarea id="undocd_kharchas" name="undocd_kharchas" rows="10" cols="50"
-            style="width: 100%; box-sizing: border-box; resize: vertical; font-size: 7pt;">{{ request.form['undocd_kharchas'] if request.form.get('undocd_kharchas') else '' }}</textarea><br><br>
+        <textarea id="undocd_kharchas" name="undocd_kharchas" class="shared-style" rows="10" cols="50"
+            wrap="off">{{ request.form['undocd_kharchas'] if request.form.get('undocd_kharchas') else '' }}</textarea><br><br>
 
         <label for="rebuild_table">rebuild table from scratch:</label>
         <input type="checkbox" id="rebuild_table" name="rebuild_table" value="true" checked><br><br>
@@ -46,25 +46,25 @@
         <input type="submit" value="update table">
     </form>
 
-    <!-- Display the new ownership table if available -->
     {% if ownership_table_new_text %}
     <h2>new ownership table</h2>
 
     <!-- text-version div -->
     <h4>text-table</h4>
     <button onclick="copyToClipboard('ownership_table_new_text')">Copy to Clipboard</button><br><br>
-    <div id="ownership_table_new_text">{{ ownership_table_new_text }}</div><br>
+    <div id="ownership_table_new_text" class="shared-style">{{ ownership_table_new_text }}</div><br>
 
     <!-- html-code div -->
     <h4>html-table-code</h4>
     <button onclick="copyToClipboard('ownership_table_new_html')">Copy to Clipboard</button><br><br>
-    <div id="ownership_table_new_html">{{ ownership_table_new_html }}</div><br>
+    <div id="ownership_table_new_html" class="shared-style">{{ ownership_table_new_html }}</div><br>
     {% endif %}
 
     <script>
         function copyToClipboard(elementId) {
-            // Get the text from the specified div
-            const textToCopy = document.getElementById(elementId).innerText;
+            // Get the text from the specified div or textarea
+            const element = document.getElementById(elementId);
+            const textToCopy = element.value || element.innerText;
             // Create a temporary input to store the text for copying
             const tempInput = document.createElement('textarea');
             tempInput.value = textToCopy;

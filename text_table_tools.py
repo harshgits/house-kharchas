@@ -160,6 +160,9 @@ class TextTableTools:
 
         # Get column headers and determine column widths
 
+        def wrap_text(text, width):
+            return textwrap.fill(text, break_long_words=False, width=width)
+
         def get_ideal_col_width(df, col, max_width=max_width):
 
             # Get raw widths of all cells including header
@@ -175,8 +178,8 @@ class TextTableTools:
             # Wrap text and find maximum wrapped width
 
             def get_wrapped_width(text, width):
-                wrapped = textwrap.fill(str(text), width=width).split("\n")
-                return max(len(line) for line in wrapped) if wrapped else 0
+                lines = wrap_text(text, width).split("\n")
+                return max(len(line) for line in lines) if lines else 0
 
             wrapped_widths = [get_wrapped_width(x, col_width) for x in df[col]]
             wrapped_widths.append(get_wrapped_width(col, col_width))
@@ -187,10 +190,6 @@ class TextTableTools:
 
         # Get column headers and determine column widths
         col_widths = {col: get_ideal_col_width(df, col) for col in df.columns}
-
-        # Function to wrap text in each cell to fit the column width
-        def wrap_text(text, width):
-            return "\n".join(textwrap.fill(str(text), width=width).split("\n"))
 
         # Prepare the table lines
         lines = []
@@ -275,19 +274,3 @@ class TextTableTools:
 
         return str(table)
 
-
-if __name__ == "__main__":
-    df_json = '''
-    {
-        "columns": ["name", "age", "city"],
-        "index": [0, 1, 2],
-        "data": [
-            ["Alice", 25, "New York"],
-            ["Bob", 30, "Los Angeles"],
-            ["Charlie", 35, "Chicago is such a great city. Why are we talking about the city again?"]
-        ]
-    }
-    '''
-    df = pd.read_json(df_json, orient="split")
-    html_table = TextTableTools.convert_dataframe_to_html_table(df)
-    print(html_table)
