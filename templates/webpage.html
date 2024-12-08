@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ownership table updater</title>
     <style>
-        #ownership_table_new {
+        #ownership_table_new_text,
+        #ownership_table_new_html {
             font-family: monospace;
             /* Monospaced font */
             font-size: 7pt;
@@ -43,19 +44,24 @@
     </form>
 
     <!-- Display the new ownership table if available -->
-    {% if ownership_table_new %}
+    {% if ownership_table_new_text %}
     <h2>new ownership table</h2>
 
-    <!-- Copy to Clipboard Button above the output -->
-    <button onclick="copyToClipboard()">Copy to Clipboard</button><br><br>
+    <!-- text-version div -->
+    <h4>text-table</h4>
+    <button onclick="copyToClipboard('ownership_table_new_text')">Copy to Clipboard</button><br><br>
+    <div id="ownership_table_new_text">{{ ownership_table_new_text }}</div><br>
 
-    <!-- <label for="ownership_table_new">ownership_table_new:</label><br> -->
-    <div id="ownership_table_new">{{ ownership_table_new }}</div><br>
+    <!-- html-code div -->
+    <h4>html-table-code</h4>
+    <button onclick="copyToClipboard('ownership_table_new_html')">Copy to Clipboard</button><br><br>
+    <div id="ownership_table_new_html">{{ ownership_table_new_html }}</div><br>
+    {% endif %}
 
     <script>
-        function copyToClipboard() {
-            // Get the text from the div
-            const textToCopy = document.getElementById('ownership_table_new').innerText;
+        function copyToClipboard(elementId) {
+            // Get the text from the specified div
+            const textToCopy = document.getElementById(elementId).innerText;
             // Create a temporary input to store the text for copying
             const tempInput = document.createElement('textarea');
             tempInput.value = textToCopy;
@@ -65,7 +71,6 @@
             document.body.removeChild(tempInput);
         }
     </script>
-    {% endif %}
 </body>
 
 </html>
