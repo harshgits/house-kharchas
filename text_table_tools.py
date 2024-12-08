@@ -1,3 +1,5 @@
+from docutils.core import publish_string
+from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
 import textwrap
@@ -247,3 +249,45 @@ class TextTableTools:
 
         # Return the final table as a string
         return "\n".join(lines)
+
+    @staticmethod
+    def convert_dataframe_to_html_table(df):
+        """
+        Convert a Pandas DataFrame into a clean and simplified HTML table.
+        """
+
+        # Convert the DataFrame to an HTML table
+        full_html = df.to_html(index=False, border=1, escape=False)
+
+        # Use BeautifulSoup to add custom attributes and simplify the table
+        soup = BeautifulSoup(full_html, "html.parser")
+        table = soup.find("table")
+
+        # Add custom attributes to the table
+        table.attrs = {
+            "border": "1",
+            "style": "border-collapse: collapse; width: 100%; text-align: left;"
+        }
+
+        # Remove all attributes from child tags (like <th>, <td>)
+        for tag in table.find_all(True):
+            tag.attrs = {}
+
+        return str(table)
+
+
+if __name__ == "__main__":
+    df_json = '''
+    {
+        "columns": ["name", "age", "city"],
+        "index": [0, 1, 2],
+        "data": [
+            ["Alice", 25, "New York"],
+            ["Bob", 30, "Los Angeles"],
+            ["Charlie", 35, "Chicago is such a great city. Why are we talking about the city again?"]
+        ]
+    }
+    '''
+    df = pd.read_json(df_json, orient="split")
+    html_table = TextTableTools.convert_dataframe_to_html_table(df)
+    print(html_table)

@@ -1,3 +1,5 @@
 # use Python 3.9
+beautifulsoup4
+docutils
 Flask
 pandas
