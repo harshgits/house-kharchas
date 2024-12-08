@@ -16,11 +16,14 @@
             padding: 10px;
             width: 100%;
             /* Full width */
-            min-height: 100px;
-            white-space: pre-wrap;
-            /* Preserves line breaks */
-            overflow-wrap: break-word;
-            /* Wraps long words */
+            max-height: 50ch;
+            /* Maximum height based on row count */
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+            overflow-x: auto;
+            /* Enable horizontal scrolling */
+            white-space: pre;
+            /* Preserve white space and prevent wrapping */
             background-color: #f9f9f9;
         }
     </style>
@@ -30,11 +33,11 @@
     <h1>ownership table updater</h1>
     <form action="/" method="post">
         <label for="ownership_table">ownership table:</label><br>
-        <textarea id="ownership_table" name="ownership_table" rows="10" cols="50"
+        <textarea id="ownership_table" name="ownership_table" rows="20" cols="50"
             style="width: 100%; box-sizing: border-box; resize: vertical; font-size: 7pt;">{{ request.form['ownership_table'] if request.form.get('ownership_table') else '' }}</textarea><br><br>
 
         <label for="undocd_kharchas">undocumented kharchas:</label><br>
-        <textarea id="undocd_kharchas" name="undocd_kharchas" rows="5" cols="50"
+        <textarea id="undocd_kharchas" name="undocd_kharchas" rows="10" cols="50"
             style="width: 100%; box-sizing: border-box; resize: vertical; font-size: 7pt;">{{ request.form['undocd_kharchas'] if request.form.get('undocd_kharchas') else '' }}</textarea><br><br>
 
         <label for="rebuild_table">rebuild table from scratch:</label>
