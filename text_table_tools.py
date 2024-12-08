@@ -161,7 +161,7 @@ class TextTableTools:
         # Get column headers and determine column widths
 
         def wrap_text(text, width):
-            return textwrap.fill(text, break_long_words=False, width=width)
+            return textwrap.fill(text, break_long_words=False, break_on_hyphens=False, width=width)
 
         def get_ideal_col_width(df, col, max_width=max_width):
 
@@ -170,23 +170,21 @@ class TextTableTools:
             raw_widths.append(len(col))
 
             # Compute typical cell width at the higher end
-            pHi_width = int(np.percentile(raw_widths, 80))
+            pHi_width = int(np.percentile(raw_widths, 70))
 
             # Compare with max_width and set initial col_width
             col_width = min(pHi_width, max_width)
 
-            # Wrap text and find maximum wrapped width
+            # Wrap text for all col cells and set col_width to width of widest cell
 
             def get_wrapped_width(text, width):
                 lines = wrap_text(text, width).split("\n")
                 return max(len(line) for line in lines) if lines else 0
 
-            wrapped_widths = [get_wrapped_width(x, col_width) for x in df[col]]
-            wrapped_widths.append(get_wrapped_width(col, col_width))
-            max_wrapped_width = max(wrapped_widths)
-
-            # If max wrapped width is less than col_width, use it instead
-            return min(col_width, max_wrapped_width)
+            wrapped_widths = [get_wrapped_width(row, col_width) for row in df[col]] + [get_wrapped_width(col, col_width)]
+            col_width = max(wrapped_widths)
+            
+            return col_width
 
         # Get column headers and determine column widths
         col_widths = {col: get_ideal_col_width(df, col) for col in df.columns}
