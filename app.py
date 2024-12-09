@@ -19,15 +19,15 @@ def input_form():
         rebuild_table = "rebuild_table" in request.form
 
         # compute result
-        # try:
-        ownership_table_new_text, extras = (
-            OTT.ingest_undocumented_kharchas_to_ownership_table(
-                ownership_table, undocd_kharchas, rebuild_table
+        try:
+            ownership_table_new_text, extras = (
+                OTT.ingest_undocumented_kharchas_to_ownership_table(
+                    ownership_table, undocd_kharchas, rebuild_table
+                )
             )
-        )
-        ownership_table_new_html = extras["o_htmltable_new"]
-        # except Exception as e:
-        #     ownership_table_new_text = f"Error occured during ingestion: \n{e}"
+            ownership_table_new_html = extras["o_htmltable_new"]
+        except Exception as e:
+            ownership_table_new_text = f"Error occured during ingestion: \n{e}"
 
     # Render the template, pass the concatenated result to the template
     return render_template(
@@ -38,5 +38,5 @@ def input_form():
 
 
 if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=5000) # use this line when using docker
-    app.run(debug=True)  # use this line when debugging the Flask app directluy
+    app.run(host="0.0.0.0", port=5000) # use this line when using docker
+    # app.run(debug=True)  # use this line when debugging the Flask app directluy
