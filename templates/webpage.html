@@ -8,23 +8,20 @@
     <style>
         .shared-style {
             font-family: monospace;
-            /* Monospaced font */
             font-size: 7pt;
-            /* Small font size */
             border: 1px solid #ccc;
             width: 100%;
-            /* Full width */
             max-height: 50ch;
-            /* Maximum height based on row count */
             overflow-y: auto;
-            /* Enable vertical scrolling */
             overflow-x: auto;
-            /* Enable horizontal scrolling */
-            white-space: pre;
-            /* Preserve white space and prevent wrapping */
             background-color: #f9f9f9;
             box-sizing: border-box;
             resize: vertical;
+        }
+
+        .editable {
+            min-height: 200px;
+            padding: 10px;
         }
     </style>
 </head>
@@ -32,9 +29,14 @@
 <body>
     <h1>ownership table updater</h1>
     <form action="/" method="post">
+        <!-- Editable DIV for Rich Text -->
         <label for="ownership_table">ownership table:</label><br>
-        <textarea id="ownership_table" name="ownership_table" class="shared-style" rows="20" cols="50"
-            wrap="off">{{ request.form['ownership_table'] if request.form.get('ownership_table') else '' }}</textarea><br><br>
+        <div id="ownership_table" name="ownership_table" class="shared-style editable" contenteditable="true">
+            {{ request.form['ownership_table'] if request.form.get('ownership_table') else '' }}
+        </div><br><br>
+
+        <!-- Hidden Input for Form Submission -->
+        <input type="hidden" id="ownership_table_hidden" name="ownership_table">
 
         <label for="undocd_kharchas">undocumented kharchas:</label><br>
         <textarea id="undocd_kharchas" name="undocd_kharchas" class="shared-style" rows="10" cols="50"
@@ -61,6 +63,19 @@
     {% endif %}
 
     <script>
+        // Sync contenteditable DIV content to hidden input on form submission
+        document.querySelector("form").addEventListener("submit", function () {
+            const editableDiv = document.getElementById("ownership_table");
+            const hiddenInput = document.getElementById("ownership_table_hidden");
+            hiddenInput.value = editableDiv.innerHTML; // Capture rich text content
+        });
+
+        // Ensure rich text paste works
+        document.getElementById("ownership_table").addEventListener("paste", (event) => {
+            // Allow default paste behavior to preserve rich formatting
+            event.stopPropagation();
+        });
+
         function copyToClipboard(elementId) {
             // Get the text from the specified div or textarea
             const element = document.getElementById(elementId);

@@ -27,7 +27,7 @@ class OwnershipTableTools:
 
         # load ownership_table into a df: old_odf
         old_odf = (
-            TextTableTools.convert_texttable_to_dataframe(ownership_table)
+            TextTableTools.convert_html_table_to_dataframe(ownership_table)
             .iloc[::-1]
             .reset_index(drop=True)
         )

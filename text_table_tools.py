@@ -325,3 +325,36 @@ class TextTableTools:
             tag.attrs = {}
 
         return str(table)
+
+    @staticmethod
+    def convert_html_table_to_dataframe(html_table):
+        """
+        Convert an HTML table into a Pandas DataFrame.
+        """
+        
+        # Parse the HTML table
+        soup = BeautifulSoup(html_table, "html.parser")
+        table = soup.find("table")  # Locate the table
+
+        # Extract headers: Prioritize <th> over <td> in <thead>
+        headers = []
+        thead = table.find("thead")
+        if thead:
+            headers = [th.text.strip() for th in thead.find_all("th")]
+            if not headers:  # Fallback to <td> if no <th> is found
+                headers = [td.text.strip() for td in thead.find_all("td")]
+
+        # Extract rows
+        rows = []
+        for tr in table.find_all("tr"):
+            cells = tr.find_all(["td", "th"])  # Include both <td> and <th> for row data
+            row = [cell.text.strip() for cell in cells]
+            rows.append(row)
+
+        # Remove header row from rows if headers exist
+        if headers and rows:
+            rows = rows[1:]  # Skip the first row if it matches headers
+
+        # Create a DataFrame
+        df = pd.DataFrame(rows, columns=headers if headers else None)
+        return df
