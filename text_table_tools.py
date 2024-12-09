@@ -317,7 +317,7 @@ class TextTableTools:
         # Add custom attributes to the table
         table.attrs = {
             "border": "1",
-            "style": "border-collapse: collapse; width: 600px; text-align: left; font-size: 7pt; font-family: sans-serif;",
+            "style": "border-collapse: collapse; width: 700px; text-align: left; font-size: 7pt; font-family: sans-serif;",
         }
 
         # Remove all attributes from child tags (like <th>, <td>)
@@ -336,13 +336,21 @@ class TextTableTools:
         soup = BeautifulSoup(html_table, "html.parser")
         table = soup.find("table")  # Locate the table
 
-        # Extract headers: Prioritize <th> over <td> in <thead>
+        # Extract headers
         headers = []
         thead = table.find("thead")
-        if thead:
-            headers = [th.text.strip() for th in thead.find_all("th")]
-            if not headers:  # Fallback to <td> if no <th> is found
-                headers = [td.text.strip() for td in thead.find_all("td")]
+        if thead:  # Extract headers from <thead>
+            header_row = thead.find("tr")  # Only use the first <tr> for headers
+            if header_row:
+                headers = [
+                    cell.get_text(strip=True) for cell in header_row.find_all(["th", "td"])
+                ]
+        else:  # Fallback: Use the first <tr> as headers
+            first_row = table.find("tr")
+            if first_row:
+                headers = [
+                    cell.get_text(strip=True) for cell in first_row.find_all(["th", "td"])
+                ]
 
         # Extract rows
         rows = []
