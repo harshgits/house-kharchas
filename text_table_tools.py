@@ -161,7 +161,9 @@ class TextTableTools:
         # Get column headers and determine column widths
 
         def wrap_text(text, width):
-            return textwrap.fill(text, break_long_words=False, break_on_hyphens=False, width=width)
+            return textwrap.fill(
+                text, break_long_words=False, break_on_hyphens=False, width=width
+            )
 
         def get_ideal_col_width(df, col, max_width=max_width):
 
@@ -181,9 +183,11 @@ class TextTableTools:
                 lines = wrap_text(text, width).split("\n")
                 return max(len(line) for line in lines) if lines else 0
 
-            wrapped_widths = [get_wrapped_width(row, col_width) for row in df[col]] + [get_wrapped_width(col, col_width)]
+            wrapped_widths = [get_wrapped_width(row, col_width) for row in df[col]] + [
+                get_wrapped_width(col, col_width)
+            ]
             col_width = max(wrapped_widths)
-            
+
             return col_width
 
         # Get column headers and determine column widths
@@ -250,7 +254,57 @@ class TextTableTools:
     @staticmethod
     def convert_dataframe_to_html_table(df):
         """
-        Convert a Pandas DataFrame into a clean and simplified HTML table.
+        Convert a Pandas DataFrame into a HTML table.
+
+        EXAMPLE:
+
+        ```
+        from text_table_tools import TextTableTools
+        import pandas as pd
+
+        df_json = '''
+            {
+                "columns": ["name", "age", "city"],
+                "index": [0, 1, 2],
+                "data": [
+                    ["Alice", 25, "New York"],
+                    ["Bob", 30, "Los Angeles"],
+                    ["Charlie", 35, "Chicago is soo nice"]
+                ]
+            }
+            '''
+        df = pd.read_json(df_json, orient="split")
+        html_table = TextTableTools.convert_dataframe_to_html_table(df)
+        print(html_table)
+        ```
+
+        # Output:
+        # <table border="1" style="border-collapse: collapse; width: 600px; text-align: left; font-size: 7pt; font-family: sans-serif;">
+        # <thead>
+        # <tr>
+        # <th>name</th>
+        # <th>age</th>
+        # <th>city</th>
+        # </tr>
+        # </thead>
+        # <tbody>
+        # <tr>
+        # <td>Alice</td>
+        # <td>25</td>
+        # <td>New York</td>
+        # </tr>
+        # <tr>
+        # <td>Bob</td>
+        # <td>30</td>
+        # <td>Los Angeles</td>
+        # </tr>
+        # <tr>
+        # <td>Charlie</td>
+        # <td>35</td>
+        # <td>Chicago is soo nice</td>
+        # </tr>
+        # </tbody>
+        # </table>
         """
 
         # Convert the DataFrame to an HTML table
@@ -263,7 +317,7 @@ class TextTableTools:
         # Add custom attributes to the table
         table.attrs = {
             "border": "1",
-            "style": "border-collapse: collapse; width: 100%; text-align: left;"
+            "style": "border-collapse: collapse; width: 600px; text-align: left; font-size: 7pt; font-family: sans-serif;",
         }
 
         # Remove all attributes from child tags (like <th>, <td>)
@@ -271,4 +325,3 @@ class TextTableTools:
             tag.attrs = {}
 
         return str(table)
-
