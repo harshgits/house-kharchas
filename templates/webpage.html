@@ -1,114 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ownership table updater</title>
-    <style>
-        .shared-style {
-            font-family: monospace;
-            font-size: 7pt;
-            border: 1px solid #ccc;
-            width: 100%;
-            max-height: 50ch;
-            overflow-y: auto;
-            overflow-x: auto;
-            background-color: #f9f9f9;
-            box-sizing: border-box;
-            resize: vertical;
-            white-space: pre;
-        }
-
-        .editable {
-            min-height: 200px;
-            padding: 10px;
-        }
-    </style>
+    <title>Upload Expenses</title>
 </head>
-
 <body>
-    <h1>ownership table updater</h1>
-    <form action="/" method="post">
-        <!-- Editable DIV for Rich Text -->
-        <label for="ownership_table">ownership table:</label><br>
-        <div id="ownership_table" name="ownership_table" class="shared-style editable" contenteditable="true">
-            {{ request.form['ownership_table'].strip() if request.form.get('ownership_table') else '' }}
-        </div>
-        <br><br>
-
-        <!-- Hidden Input for Form Submission -->
-        <input type="hidden" id="ownership_table_hidden" name="ownership_table">
-
-        <label for="undocd_kharchas">undocumented kharchas:</label><br>
-        <textarea id="undocd_kharchas" name="undocd_kharchas" class="shared-style" rows="10" cols="50"
-            wrap="off">{{ request.form['undocd_kharchas'] if request.form.get('undocd_kharchas') else '' }}</textarea><br><br>
-
-        <label for="rebuild_table">rebuild table from scratch:</label>
-        <input type="checkbox" id="rebuild_table" name="rebuild_table" value="true" checked><br><br>
-
-        <input type="submit" value="update table">
+    <h1>Upload expenses.csv</h1>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv" required>
+        <button type="submit">Upload and Process</button>
     </form>
-
-    {% if ownership_table_new_text %}
-    <h2>new ownership table</h2>
-
-    <!-- text-version div -->
-    <h4>text-table</h4>
-    <button onclick="copyToClipboard('ownership_table_new_text')">Copy to Clipboard</button><br><br>
-    <div id="ownership_table_new_text" class="shared-style">{{ ownership_table_new_text }}</div><br>
-
-    <!-- html-code div -->
-    <h4>html-table-code</h4>
-    <button onclick="copyToClipboard('ownership_table_new_html')">Copy to Clipboard</button><br><br>
-    <div id="ownership_table_new_html" class="shared-style">{{ ownership_table_new_html }}</div><br>
-    {% endif %}
-
-    <script>
-        // Remove unnecessary whitespace and normalize content
-        function cleanOwnershipTableContent() {
-            const editableDiv = document.getElementById("ownership_table");
-            if (editableDiv) {
-                const cleanedContent = editableDiv.innerHTML
-                    .replace(/^\s+|\s+$/g, "") // Trim leading/trailing whitespace
-                    .replace(/<br>/g, "") // Remove unintended line breaks
-                    .replace(/&nbsp;/g, ""); // Remove non-breaking spaces
-                editableDiv.innerHTML = cleanedContent; // Update the div
-            }
-        }
-
-        // Clean content on page load
-        document.addEventListener("DOMContentLoaded", cleanOwnershipTableContent);
-
-        // Sync contenteditable DIV content to hidden input on form submission
-        document.querySelector("form").addEventListener("submit", function () {
-            const editableDiv = document.getElementById("ownership_table");
-            const hiddenInput = document.getElementById("ownership_table_hidden");
-            const cleanedContent = editableDiv.innerHTML
-                .replace(/^\s+|\s+$/g, "") // Trim leading/trailing whitespace
-                .replace(/<br>/g, "") // Remove unintended line breaks
-                .replace(/&nbsp;/g, ""); // Remove non-breaking spaces
-            hiddenInput.value = cleanedContent; // Capture clean content
-        });
-
-        // Ensure rich text paste works
-        document.getElementById("ownership_table").addEventListener("paste", (event) => {
-            event.stopPropagation(); // Allow paste without restrictions
-        });
-
-        function copyToClipboard(elementId) {
-            // Get the text from the specified div or textarea
-            const element = document.getElementById(elementId);
-            const textToCopy = element.value || element.innerText;
-            // Create a temporary input to store the text for copying
-            const tempInput = document.createElement('textarea');
-            tempInput.value = textToCopy;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-        }
-    </script>
 </body>
-
 </html>
