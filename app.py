@@ -1,6 +1,5 @@
 from flask import Flask, request, render_template, send_file
 import io
-import csv
 
 app = Flask(__name__)
 
@@ -12,8 +11,11 @@ def input_form():
         if uploaded_file and uploaded_file.filename.endswith(".csv"):
             # Read the file content
             file_content = uploaded_file.stream.read().decode("utf-8")
-            # Add a space to the content
+
+            # update the to-date columns in the expenses csv_string
+            # TODO: imlpement
             modified_content = file_content
+            
             # Create a CSV response
             output = io.StringIO()
             output.write(modified_content)

@@ -1,3 +1,3 @@
 # house-kharchas
 
-Simple app that takes a CSV file as input and updates the todate columns.
+Simple app that takes an Expenses CSV file as input, updates the todate columns, and outputs the result as a new CSV file.
