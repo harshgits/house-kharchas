@@ -29,5 +29,5 @@ def input_form():
     return render_template("webpage.html")
 
 if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=5000) # use this line when using docker
-    app.run(debug=True)  # use this line when debugging the Flask app directly
+    app.run(host="0.0.0.0", port=5000) # use this line when using docker
+    # app.run(debug=True)  # use this line when debugging the Flask app directly
