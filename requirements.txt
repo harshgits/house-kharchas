@@ -1,5 +1,8 @@
-# use Python 3.9
-beautifulsoup4
-docutils
+# Run these commands to create a suitable Python environment and install dependencies
+# listed in this file:
+#   conda create -n house_kharchas python=3.12
+#   conda activate house_kharchas
+#   pip install -r requirements.txt
+
 Flask
 pandas
