@@ -1,3 +1,4 @@
+from expenses_table_tools import ExpensesTableTools
 from flask import Flask, request, render_template, send_file
 import io
 
@@ -13,18 +14,17 @@ def input_form():
             file_content = uploaded_file.stream.read().decode("utf-8")
 
             # update the to-date columns in the expenses csv_string
-            # TODO: imlpement
-            modified_content = file_content
+            file_content_new = ExpensesTableTools.update_todate_cols_in_expenses_table(file_content)
             
             # Create a CSV response
             output = io.StringIO()
-            output.write(modified_content)
+            output.write(file_content_new)
             output.seek(0)
             return send_file(
                 io.BytesIO(output.getvalue().encode("utf-8")),
                 mimetype="text/csv",
                 as_attachment=True,
-                download_name="modified_expenses.csv"
+                download_name="expenses_with_ownership.csv"
             )
     return render_template("webpage.html")
 

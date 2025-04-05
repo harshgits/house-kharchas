@@ -3,13 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Expenses</title>
+    <title>ownership updater app</title>
+    <style>
+        p {
+            max-width: 50%; /* Restrict the paragraph width to 50% of the container */
+            word-wrap: break-word; /* Ensures long words wrap to the next line */
+            word-break: break-word; /* Breaks words if necessary */
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload expenses.csv</h1>
+    <h1> </h1>
     <form id="uploadForm" action="/" method="post" enctype="multipart/form-data">
         <input id="fileInput" type="file" name="file" accept=".csv" style="display: none;" required>
-        <button type="button" id="uploadButton">Upload</button>
+        <button type="button" id="uploadButton">Upload Expenses CSV file</button>
+        <p>Once you upload the CSV file, 
+            the todate columns (including 'todate_ownership_percent_split') 
+            will be updated (new columns will be added to the table if not present) and 
+            the result CSV file "expenses_with_ownership.csv" 
+            will be downloaded to your computer. Any existing todate columns content 
+            will be overwritten.</p>
     </form>
     <script>
         document.getElementById("uploadButton").addEventListener("click", function () {
